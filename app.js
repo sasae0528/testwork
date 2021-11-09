@@ -6,7 +6,7 @@ const index_page = fs.readFileSync('./index.ejs','utf8');
 
 var server = http.createServer(getFromClient);
 
-server.listen(3000);
+server.listen(80);
 console.log('Server Start!');
 
 function getFromClient(request, response){
