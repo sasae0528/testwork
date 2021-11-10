@@ -1,7 +1,9 @@
 const http = require('http');
 const fs = require('fs');
 const ejs = require('ejs');
-const url = require('url')
+const url = require('url');
+const qs = require('querystring');
+
 
 const index_page = fs.readFileSync('./index.ejs','utf8');
 const other_page = fs.readFileSync('./other.ejs','utf8');
@@ -13,26 +15,14 @@ server.listen(80);
 console.log('Server Start!');
 
 function getFromClient(request, response){
-    var url_parts = url.parse(request.url);
+    var url_parts = url.parse(request.url, true);
     switch (url_parts.pathname) {
         case '/':
-            var content = ejs.render(index_page, {
-                title: "indexページ",
-                content: "これはテンプレートを使ったサンプルページです。",
-            });
-            response.writeHead(200, {'Content-Type': 'text/html'});
-            response.write(content);
-            response.end()
+            response_index(request, response);
             break;
     
         case '/other':
-            var content = ejs.render(other_page, {
-                title: "Other",
-                content: "これは新しく用意したページです。",
-            });
-            response.writeHead(200, {'Content-Type': 'text/html'});
-            response.write(content);
-            response.end()
+            response_other(request, response);
             break;
         
         case '/style.css':
@@ -48,3 +38,46 @@ function getFromClient(request, response){
         }
 }
 
+function response_index(rezuest, response) {
+    var msg = "これはIndexページです。"
+    var content = ejs.render(index_page, {
+        title: "Index",
+        content: msg,
+    });
+    response.writeHead(200, { 'Content-Type': 'text/html'});
+    response.write(content);
+    response.end();
+}
+
+function response_other(request, response) {
+    var msg = "これはotherページです。"
+
+    if (request.method == 'POST') {
+        var body = '';
+
+        request.on('data', (data) => {
+            body += data;
+        });
+        request.on('end', () => {
+            var post_data = qs.parse(body);
+            msg += 'あなたは、「' + post_data.msg + '」と書きました。';
+            var content = ejs.render(other_page, {
+                title: "Other",
+                content: msg,
+            });
+            response.writeHead(200, { 'Content-Type': 'text/html'});
+            response.write(content);
+            response.end();
+        });
+    }else {
+        var msg = "ページがありません。"
+        var content = ejs.render(other_page, {
+            title: "Other",
+            content: msg,
+        });
+        response.writeHead(200, { 'Content-Type': 'text/html'});
+        response.write(content);
+        response.end();
+    }
+
+}
